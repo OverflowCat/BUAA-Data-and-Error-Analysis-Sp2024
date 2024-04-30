@@ -3,7 +3,7 @@
 #let hr = line(stroke: black.lighten(70%), length: 100%)
 #let c = x => calc.round(x, digits: 3)
 
-#let regression = (x, y, x_unit: "", y_unit: "", estimate: none) => {
+#let regression = (x, y, x_unit: "", y_unit: "", estimate: none, control: none) => {
 // = 一元线性回归
 assert(x.len() == y.len())
 let N = x.len()
@@ -141,21 +141,48 @@ table(
   [总计], $S = #c(S)$, $#(v_Q + v_U)$, [#line(length: 1em)], [#line(length: 1em)], [#line(length: 1em)]
 ) 
 
+let sigma_ = calc.sqrt(sigma2)
 /* 在定点的值 */
 if estimate != none { 
   [
-    == 预测
+    == 预测问题
     当 $x_0 = estimate$ 时，有
   ]
   let y_0 = b_0 + b * estimate
   $ y_0 = #c(b_0) + (#c(b)) times estimate = #c(y_0) $
-  let sigma_ = calc.sqrt(sigma2)
   $ sqrt(Q / (N - 2)) = #c(sigma_) $
-  [
-    因 $alpha$ = 0.05，查附表 2.1 正态分布表可得 $Z_alpha approx 1.95$，得到
-  ]
-  let d = 1.95 * sigma_
-  $ d = 1.95 times sigma = #c(d) $
-  [$y_0$ 的 95% 近似预测区间为 $(#c(y_0 - d), #c(y_0 + d)).$]
+  if N > 90 { 
+    [因 $alpha$ = 0.05，查附表 2.1 正态分布表可得 $Z_alpha approx 1.95$，得到]
+    let d = 1.95 * sigma_
+    $ d = 1.95 times sigma = #c(d) $
+    [$y_0$ 的 95% 近似预测区间为 $(#c(y_0 - d), #c(y_0 + d)).$]
+  } else {
+    let t = 2.31
+    [查附表2.3可得 $t_alpha (N-2)= #t.$]
+    let d = t * sigma_ * calc.sqrt(1 + 1/N + calc.pow(estimate - x_avg, 2) / l_xx)
+    $ delta(x_0) = t_alpha (N-2) sigma sqrt(1 + 1/N + (x_0 - overline(x))^2/l_(x x)) = #c(d). $
+    [即预测水平为0.95的区间为 $(#c(y_0 - d), #c(y_0 + d))$．]
   }
+}
+
+if control != none {
+  let (y01, y02) = control
+  [
+    == 控制问题
+    $ y_"0 1" = y01, y_"0 2" = y02, $
+  ]
+  $ cases(
+    x_1 = 1/b ((y_0)_1 - b_0 plus/* .minus */ Z_alpha sqrt(Q/(N-2))),
+    x_2 = 1/b ((y_0)_2 - b_0 minus/* .plus */ Z_alpha sqrt(Q/(N-2)))
+  ) $
+  if b > 0 {
+    $ b > 0, x_1 > x > x_2, $
+  } else {
+    $ b < 0, x_1 < x < x_2, $
+  }
+  let Z = 1.95
+  let x1 = 1/b*(y01 - b_0 + Z * sigma_)
+  let x2 = 1/b*(y02 - b_0 - Z * sigma_)
+  [其中 $x_1 = x1, x_2 = x2.$]
+}
 }
