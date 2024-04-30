@@ -1,12 +1,25 @@
+#import "helper.typ": hr, c
 #import "@preview/unify:0.5.0": num,qty,numrange,qtyrange
 
-#let hr = line(stroke: black.lighten(70%), length: 100%)
-#let c = x => calc.round(x, digits: 3)
+#let regression = (x, _y, x_unit: "", y_unit: "", estimate: none, control: none) => {
+let N = x.len()
+let y = ()
+let REP = false
+let m = 1
+if type(_y.at(0)) == array {
+  // 重复测量
+  REP = true
+  m = _y.len()
+  for i in range(N) {
+    let avg = _y.map(y_group => y_group.at(i)).sum() / m
+    y.push(avg)
+  }
+} else {
+  y = _y
+}
 
-#let regression = (x, y, x_unit: "", y_unit: "", estimate: none, control: none) => {
 // = 一元线性回归
 assert(x.len() == y.len())
-let N = x.len()
 
 [== 原始数据]
 
@@ -32,12 +45,15 @@ if XU != "" {
   YXU += "/" + XU
 }
 if YU != "" {
-  YU2 = $#y_unit^2$
+  YU2 = $" "#y_unit^2$
   if XU != "" {
     XYU += $dot.c$
   }
   XYU += YU
   YXU = YU + YXU
+}
+if XYU != "" {
+  XYU = " " + XYU
 }
 
 // 计算x的均值
@@ -99,15 +115,45 @@ $ hat(y) = #b_0 YU + (#b YXU) x $
 
 [== 方差分析]
 
-let S = l_yy
-let U = calc.pow(l_xy, 2) / l_xx
-let Q = S - U
+let DM = $sum^m_(i=1)$
+let (S, U, Q) = (0., 0., 0.)
+if REP {
+  S = _y.flatten().map(yti => calc.pow(yti - y_avg, 2)).sum()
+  U = m * b * l_xy
+  Q = S - U
+  let vU = 1
+  let QL = m * l_yy - U
+  let QE = range(N).map(t => _y.map(y_group => calc.pow(y_group.at(t) - y.at(t), 2)).sum()).sum()
+  let vL = N - 2
+  let vE = N * (m - 1)
+  [
+  / 总离差平方和: $ S = #c(S) YU2. $
+  / 回归平方和: $ U = m b l_(x y) = #c(U) YU2. $
+  / 残余平方和: $ Q &= l_(y y) - b l_(x y) = S - U = #c(Q) YU2,\
+  Q_E &= DS DM (y_(t i) - overline(y)_t)^2 = #c(QE) YU2,\
+  Q_L &= m l_(y y) - U = #c(QL) YU2.
+  $
+  ]
+  let F1 = (QL / vL) / (QE / vE)
+  let F2 = (U / vU) / ((QE + QL) / (vE + vL)) 
+  $
+  F_1 = (Q_L / v_L) / (Q_E / v_E) = #c(F1), quad
+  F_2 = (U / v_U) / ((Q_E + Q_L) / (v_E + v_L)) = #c(F2). \
+  sigma_E = sqrt(Q_E / v_E) = #c(calc.sqrt(QE / vE)). quad
+  sigma_L = sqrt(Q_L / v_L) = #c(calc.sqrt(QL / vL)).
+  $
+} else {
+  S = l_yy
+  U = calc.pow(l_xy, 2) / l_xx
+  Q = S - U
+  [
+  / 总离差平方和: $ S = DS (y_t - overline(y))^2 = l_(y y) = #c(S) YU2. $
+  / 回归平方和: $ U = DS (hat(y)_t - overline(y))^2 = b l_(x y) = l_(x y)^2 / l_(x x) = #c(U) YU2. $
+  / 残余平方和: $ Q = l_(y y) - b l_(x y) = S - U = #c(Q) YU2. $
+  ]
+}
 
 [
-/ 总离差平方和: $ S = DS (y_t - overline(y))^2 = l_(y y) = #c(S) YU2. $
-/ 回归平方和: $ U = DS (hat(y)_t - overline(y))^2 = b l_(x y) = l_(x y)^2 / l_(x x) = #c(U) YU2. $
-/ 残余平方和: $ Q = l_(y y) - b l_(x y) = S - U = #c(Q) YU2. $
-
 == 显著性检验
 
 === $bold(F)$ 检验

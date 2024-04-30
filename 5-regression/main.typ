@@ -1,6 +1,5 @@
 #import "regression.typ": regression
 #set page(paper: "a5")
-#set text(lang: "zh", cjk-latin-spacing: auto)
 
 /*
 = 例
@@ -18,14 +17,13 @@
 #let y = (26.5, 27.3, 24.2, 27.1, 23.6, 25.9, 26.3, 22.5, 21.7, 21.4, 25.8, 24.9)
 #regression(x, y, estimate: 24.5)
 #pagebreak()
-*/
 
 = 5-5
 
 #let x = (20.3, 28.1, 35.5, 42.0, 50.7, 58.6, 65.9, 74.9, 80.3, 86.4)
 #let y = (416, 386, 368, 337, 305, 282, 258, 224, 201, 183)
 #regression(x, y, x_unit: "%", y_unit: sym.degree.c, estimate: 60.0, control: (310, 345))
-
+*/
 
 = 5-7
 
@@ -41,12 +39,4 @@
   (7.23, 8.16, 8.94, 9.91, 10.7, 12.2),
 )
 
-#let x = (1.585, 2.512, 3.979, 6.310, 9.988, 15.85)
-#let y = (0.03162, 0.02291, 002089, 0.01950, 0.01862, 0.01513)
-#let lnx = x.map(calc.ln)
-#let lny = y.map(calc.ln)
-
-#table(
-  columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
-  ..x.map(str), ..y.map(str)
-)
+#regression(x, y, x_unit: "g", y_unit: "cm")
