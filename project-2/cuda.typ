@@ -1,6 +1,6 @@
 #set text(cjk-latin-spacing: auto, lang: "cmn")
-#import "helper.typ": average, stderr, c, c2
-#import "@preview/unify:0.5.0": num,qty
+#import "helper.typ": average, stderr, c, c2, r, r0
+#import "@preview/unify:0.5.0": num, qty
 
 #let tDistribution(n, alpha) = {
   let data = (
@@ -59,13 +59,13 @@
   let flag = vd > Ksigma
   let content = [
     // $x_d = #x_d, overline(x) = avg2$
-    对于测量列 $x_1, x_2, dots.c, x_n, n=#n$，怀疑第 $d=#(d+1)$ 个数据 $x_d = #qty(x_d, "V")$ 为离群值。
+    对于测量列 $x_1, x_2, dots.c, x_n, n=#n$，怀疑第 $d=#(d+1)$ 个数据 $x_d = #qty(r0(x_d), "V")$ 为离群值。
     
-    将其剔除后计算平均值 $display(overline(x) = 1/(n-1) sum^n_(i=1,i!=d) x_i=#qty(c(avg2), "V"))$，进而求得测量列的标准差 $sigma=sqrt((sum^(n-1)_(i=1) v_i^2)/(n-2)) = #qty(c(sig2), "V")$。
+    将其剔除后计算平均值 $display(overline(x) = 1/(n-1) sum^n_(i=1,i!=d) x_i=#qty(r(avg2), "V"))$，进而求得测量列的标准差 $sigma=sqrt((sum^(n-1)_(i=1) v_i^2)/(n-2)) = #qty(c(sig2), "V")$。
     
     由表2.1.5查得 $t$ 分布的检验系数 $K(#n, alpha) = #K$。
 
-    因为 $#c(vd) = |x_d - overline(x)| #if flag {$>=$} else {$<$} K(n, alpha) sigma = #c(Ksigma)$，
+    因为 $#c(vd) = |x_d - overline(x)| #if flag {$>=$} else {$<$} K(n, alpha) sigma = #r(Ksigma)$，
     所以#if flag [需要剔除] else [不需要剔除，检验完毕]。
   ]
   if flag {

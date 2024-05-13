@@ -1,10 +1,91 @@
 #import "regression.typ": regression, transpose
 #import "cuda.typ": roman
-#import "helper.typ": hr
+#import "helper.typ": hr, r0
+#import "vendor/lib.typ": round
 #set page(paper: "a5", margin: 1cm)
 #import "@preview/unify:0.5.0": num,qty
 #set text(cjk-latin-spacing: auto, font: "Noto Serif CJK SC")
 #show "。": "．"
+
+= 第二次大作业
+
+== 原始数据
+
+// 放电量
+#let x = (50, 200, 300, 500, 800)
+// 电压
+#let y = (
+  (0.17, 0.16, 0.19, 0.20, 0.19, 0.19, 0.28, 0.23, 0.20),
+  (0.31, 0.44, 0.40, 0.34, 0.33, 0.44, 0.38, 0.28, 0.33),
+  (0.68, 0.48, 0.65, 0.66, 0.93, 0.64, 0.65, 0.82, 0.62),
+  (1.05, 0.88, 0.92, 0.60, 1.02, 1.00, 1.40, 1.15, 1.07),
+  (1.93, 1.50, 1.97, 2.30, 1.86, 1.80, 2.00, 1.99, 1.92),
+)
+
+#let m = 9
+
+#table(columns: range(m+1).map(_ => auto),
+  table.header(
+    table.cell(rowspan: 2)[放电量#"\n"$"/pC"$],
+    table.cell(colspan: m, align: center)[电压$"/V"$],
+    ..range(m).map(x => [#(x+1)])
+  ),
+  ..y.enumerate().map(group => ([#x.at(group.at(0))], ..group.at(1).map(x => r0(x)))).flatten()
+  
+)
+
+// y 的数据还需要预处理去掉粗大误差
+
+== 粗大误差的剔除
+#show "Romanovsky": "罗曼诺夫斯基准则"
+#show "3sigma": [$3 sigma$ 准则]
+
+#let alpha = .05
+由于重复测量的数据组数小于10，数据不一定符合正态分布，无法使用 3sigma。使用Romanovsky剔除粗大误差。选取显著度水平 $#sym.alpha=#alpha$。
+
+#hr
+
+#let y_ = y
+#for (i, (x, group)) in x.zip(y).enumerate() {
+  [当放电量为 #qty(x, "pC") 时，]
+  let (content, group_) = roman(group, alpha)
+  content
+  y_.at(i) = group_
+  hr
+}
+
+// #table(
+  #y_.map(x => x.len())
+// )
+
+#regression(x, y_, x_unit: "pC", y_unit: "V")
+
+== 误差源分析
+
+1. 传感器导致的误差：由于在放电过程中存在放热现象，传感器并不能工作在稳定的环境内，由于温度变化，传感器温漂将会带来误差。
+2. RS485作为串口通信的功能，没有选择校验方式，可能会存在误差。
+3. 放大器及滤波电路模块：由于环境中的电磁干扰带来的噪声影响，如果滤波器并未完全消除噪声，放大器将会增大噪声对于所测数据的影响，导致误差增大。
+4. ADC模数转换器：在采样过程中，由于采样频率低，采样周期长，对于电压信号的测量范围的覆盖不够全面，可能未测量到电压峰值，导致测量值偏低。
+5. 环境因素带来的误差：环境条件由于放电过程所伴随的电、声、光、热等现象，会持续改变，由此导致环境因素的不稳定，系统将会受到影响，使得误差增大
+
+== 系统精度提高方案
+
+=== 选择合适的校验方式
+
+奇偶校验能够检测出信息传输过程中的部分误码（1位误码能检出，2位及2位以上误码不能检出），使用简单，同时，它不能纠错。在发现错误后，只能要求重发。
+CRC循环冗余校验。检错和纠错能力强，可以用于实现差错控制。
+
+=== 改进采样方式
+
+增大采样频率，增大采样带宽，得到更多的数据量，保证信号峰值被测量到
+
+=== 更换传感器
+
+选择更稳定的传感器，并在使用前校准。
+
+=== 选择更好的测量方案
+
+可以选择其他的测量方案，比如采用基于Sagnac干涉仪的多点局部放电检测系统，由于使用的光纤具有抗电磁干扰、绝缘性能极佳、体积小、布置方式灵活、灵敏度高、耐腐蚀等特点，工作状态不会受到影响。抗干扰能力更强。
 
 /*
 = 例
@@ -52,56 +133,3 @@
 
 #regression(x, y, x_unit: "g", y_unit: "cm")
 */
-
-= 第二次大作业
-
-== 原始数据
-
-// 放电量
-#let x = (50, 200, 300, 500, 800)
-// 电压
-#let y = (
-  (0.17, 0.16, 0.19, 0.20, 0.19, 0.19, 0.28, 0.23, 0.20),
-  (0.31, 0.44, 0.40, 0.34, 0.33, 0.44, 0.38, 0.28, 0.33),
-  (0.68, 0.48, 0.65, 0.66, 0.93, 0.64, 0.65, 0.82, 0.62),
-  (1.05, 0.88, 0.92, 0.60, 1.02, 1.00, 1.40, 1.15, 1.07),
-  (1.93, 1.50, 1.97, 2.30, 1.86, 1.80, 2.00, 1.99, 1.92),
-)
-
-#let m = 9
-
-#table(columns: range(m+1).map(_ => auto),
-  table.header(
-    table.cell(rowspan: 2)[放电量#"\n"$"/pC"$],
-    table.cell(colspan: m, align: center)[电压$"/V"$],
-    ..range(m).map(x => [#(x+1)])
-  ),
-  ..y.enumerate().map(group => ([#x.at(group.at(0))], ..group.at(1).map(x => [#x]))).flatten()
-  
-)
-
-// y 的数据还需要预处理去掉粗大误差
-
-== 粗大误差的剔除
-#show "Romanovsky": "罗曼诺夫斯基准则"
-#show "3sigma": [$3 sigma$ 准则]
-
-#let alpha = .05
-由于重复测量的数据组数小于10，数据不一定符合正态分布，无法使用 3sigma。使用Romanovsky剔除粗大误差。选取显著度水平 $#sym.alpha=#alpha$。
-
-#hr
-
-#let y_ = y
-#for (i, (x, group)) in x.zip(y).enumerate() {
-  [当放电量为 #qty(x, "pC") 时，]
-  let (content, group_) = roman(group, alpha)
-  content
-  y_.at(i) = group_
-  hr
-}
-
-// #table(
-  #y_.map(x => x.len())
-// )
-
-#regression(x, y_, x_unit: "pC", y_unit: "V")

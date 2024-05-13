@@ -1,5 +1,5 @@
-#import "helper.typ": hr, c, average
-#import "@preview/unify:0.5.0": num,qty,numrange,qtyrange
+#import "helper.typ": *
+#import "@preview/unify:0.5.0": num, qty
 
 #let transpose(data) = {
   let width = data.at(0).len()
@@ -70,12 +70,12 @@ let x_sq = x.map(x => calc.pow(x, 2))
 let sum_x_sq = x_sq.sum()
 
 let x_sq_avg = calc.pow(sum_x, 2) / N
-$ DS x_t^2 = #c(sum_x_sq) XU2, quad (DS x_t)^2 / N = #c(x_sq_avg) XU2 $
+$ DS x_t^2 = #num(rx(sum_x_sq)) XU2 , quad (DS x_t)^2 / N = #num(rx(x_sq_avg)) XU2 $
 
 
 let l_xx = sum_x_sq - x_sq_avg
 
-$ l_(x x) = DS x_t^2 - (DS x_t)^2 / N = #c(l_xx) XU2 $
+$ l_(x x) = DS x_t^2 - (DS x_t)^2 / N = #num(rx(l_xx)) XU2 $
 
 hr
 
@@ -90,32 +90,32 @@ let y_sq = y.map(y => y*y)
 let sum_y_sq = y_sq.sum()
 
 let y_sq_avg = calc.pow(sum_y, 2) / N
-$ DS y_t^2 = #c(sum_y_sq) YU2, quad (DS y_t)^2 / N = #c(y_sq_avg) YU2 $
+$ DS y_t^2 = #num(ry(sum_y_sq)) YU2, quad (DS y_t)^2 / N = #num(ry(y_sq_avg)) YU2 $
 
 let l_yy = sum_y_sq - y_sq_avg
 
-$ l_(y y) = DS y_t^2 - (DS y_t)^2 / N = #c(l_yy) YU2 $
+$ l_(y y) = DS y_t^2 - (DS y_t)^2 / N = #num(ry(l_yy)) YU2 $
 
 hr
 
 let sum_xy = x.zip(y).map(((x, y)) => x * y ).sum()
 let xy_sum_avg = (sum_x * sum_y) / N
-$ DS x_t y_t = #c(sum_xy) XYU, quad ((DS x_t)(DS y_t)) / N = #c(xy_sum_avg) XYU $
+$ DS x_t y_t = #num(rxy(sum_xy)) XYU, quad ((DS x_t)(DS y_t)) / N = #num(rxy(xy_sum_avg)) XYU $
 
 let l_xy = sum_xy - xy_sum_avg
-$ l_(x y) = DS x_t y_t - ((DS x_t)(DS y_t)) / N = #c(l_xy) XYU $
+$ l_(x y) = DS x_t y_t - ((DS x_t)(DS y_t)) / N = #num(rxy(l_xy)) XYU $
 
 [=== 计算 $b$ 和 $b_0$]
 
 let b = l_xy / l_xx
-$ b = l_(x y) / l_(x x) = #calc.round(b, digits: 5) YXU $
+$ b = l_(x y) / l_(x x) = #num(rxy(b)) YXU $
 
 let b_0 = y_avg - b * x_avg
-$ b_0 = overline(y) - b overline(x) = #c(b_0) YU $
+$ b_0 = overline(y) - b overline(x) = #num(rxy(b_0)) YU $
 
 [最终的回归直线为]
 
-$ hat(y) = #c(b_0) YU + (#c(b) YXU) x $
+$ hat(y) = #num(r(b_0)) YU + (#num(r(b)) YXU) x $
 
 [== 方差分析]
 
@@ -169,6 +169,9 @@ let vS = N*m - 1
 let F = calc.round((U/vU)/(QE/vE), digits: 2)
 let F1 = calc.round((QL / vL) / (QE / vE), digits: 2)
 let F2 = calc.round((U/vU) / ((QE + QL) / (vE + vL)), digits: 2)
+let UvU = U / vU
+let QLvL = QL / vL
+let QEvE = QE / vE
 
 $
 F =& (U "/" v_U) / (Q_E "/" v_E)
@@ -193,12 +196,15 @@ table(
   align: center,
   columns: (auto, auto, auto, auto, 1fr, auto),
   table.header([来源], [平方和], [自由度], [方差], $F$, $F_alpha$),
-  [回归], $U = #c(U)$, $v_U=#vU$, $U"/"V_U$, $F = #F$, $F_alpha (1, N(m-1))$,
+  [回归], $U = #c(U)$, $v_U=#vU$, $U"/"V_U \
+  = #c(UvU)$, $F = #F$, $F_alpha (1, N(m-1))$,
   // [残余], $Q = #c(Q)$, $#v_Q$,
-  [失拟], $Q_L$, $v_L &= N-2 \
-  &= #vL$, $Q_L"/"V_L$, $F_1 = F1$, $F_alpha (v_L, v_E)$,
-  [误差], $Q_E$, $v_E &= N(m-1) \
-  &= #vE$, $Q_E"/"V_E$, dash, dash,
+  [失拟], $Q_L=#c(QL)$, $v_L &= N-2 \
+  &= #vL$, $Q_L"/"V_L \
+  = #c(QLvL)$, $F_1 = F1$, $F_alpha (v_L, v_E)$,
+  [误差], $Q_E=#c(QE)$, $v_E &= N(m-1) \
+  &= #vE$, $Q_E"/"V_E \
+  = #c(QEvE)$, dash, dash,
   [总计], $S = #c(S)$, $v_S &= N m-1 \
   &= #vS $, dash, dash, dash
 ) 
