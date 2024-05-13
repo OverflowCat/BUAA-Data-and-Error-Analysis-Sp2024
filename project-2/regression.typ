@@ -1,4 +1,4 @@
-#import "helper.typ": *
+#import "./helper.typ": *
 #import "@preview/unify:0.5.0": num, qty
 
 #let transpose(data) = {
@@ -83,7 +83,7 @@ hr
 let sum_y = y.sum()
 
 let y_avg = sum_y / N
-$ DS y_t = #c(sum_y) YU, overline(y) = #c(y_avg) YU $
+$ DS y_t = #c(sum_y)" "YU, overline(y) = #c(y_avg)" "YU $
 
 // 计算y的平方的平均值
 let y_sq = y.map(y => y*y)

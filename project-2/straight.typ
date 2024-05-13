@@ -1,4 +1,4 @@
-#import "helper.typ": c
+#import "./helper.typ": c
 #set text(lang: "zh", cjk-latin-spacing: auto)
 
 == 5-10

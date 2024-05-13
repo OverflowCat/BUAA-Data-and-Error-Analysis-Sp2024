@@ -1,4 +1,4 @@
-#import "vendor/lib.typ": round
+#import "./vendor/lib.typ": round
 
 #let hr = line(stroke: black.lighten(70%), length: 100%)
 #let r0 = n => round(n, if str(n).starts-with("0.") {2} else {3})
