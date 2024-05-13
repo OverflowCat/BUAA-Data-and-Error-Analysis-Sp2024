@@ -22,19 +22,6 @@ y = _y.map(g => average(g))
 // = 一元线性回归
 assert(x.len() == y.len())
 
-[== 原始数据]
-
-table(
-  columns: (.8cm, ..range(N).map(x => 1fr)),
-  table.header("N", ..range(N).map(x => [#(x+1)])),
-  $x$, ..x.map(x => [#x]),
-  $y$, ..y.map(y => [#c(y)]),
-)
-
-[== 回归方程的确定]
-
-let DS = $sum^N_(t=1)$
-
 // 单位的显示
 let XU = x_unit
 let XU2 = ""
@@ -59,6 +46,20 @@ if XYU != "" {
   XYU = " " + XYU
 }
 
+[== 每组求平均后的数据]
+
+table(
+  columns: (auto, ..range(N).map(x => 1fr)),
+  table.header("N", ..range(N).map(x => [#(x+1)])),
+  $x"/"XU$, ..x.map(x => [#x]),
+  $y"/"YU$, ..y.map(y => [#c(y)]),
+)
+
+[== 回归方程的确定]
+
+let DS = $sum^N_(t=1)$
+
+[=== 计算 $l_(x x)$]
 // 计算x的均值
 let sum_x = x.sum()
 
@@ -77,8 +78,9 @@ let l_xx = sum_x_sq - x_sq_avg
 
 $ l_(x x) = DS x_t^2 - (DS x_t)^2 / N = #num(rx(l_xx)) XU2 $
 
-hr
+pagebreak()
 
+[=== 计算 $l_(y y)$]
 // 计算y的均值
 let sum_y = y.sum()
 
@@ -96,7 +98,9 @@ let l_yy = sum_y_sq - y_sq_avg
 
 $ l_(y y) = DS y_t^2 - (DS y_t)^2 / N = #num(ry(l_yy)) YU2 $
 
-hr
+pagebreak()
+
+[=== 计算 $l_(x y)$]
 
 let sum_xy = x.zip(y).map(((x, y)) => x * y ).sum()
 let xy_sum_avg = (sum_x * sum_y) / N
@@ -104,6 +108,8 @@ $ DS x_t y_t = #num(rxy(sum_xy)) XYU, quad ((DS x_t)(DS y_t)) / N = #num(rxy(xy_
 
 let l_xy = sum_xy - xy_sum_avg
 $ l_(x y) = DS x_t y_t - ((DS x_t)(DS y_t)) / N = #num(rxy(l_xy)) XYU $
+
+pagebreak()
 
 [=== 计算 $b$ 和 $b_0$]
 

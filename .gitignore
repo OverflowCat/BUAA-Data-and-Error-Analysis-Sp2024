@@ -1,2 +1,3 @@
 *.pdf
 vendor
+private.*
